@@ -16,7 +16,7 @@ func ping(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/", home)
+	http.HandleFunc("/home", home)
 	http.HandleFunc("/ping", ping)
 
 	err := http.ListenAndServe(":8080", nil)

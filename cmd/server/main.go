@@ -3,21 +3,18 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/kiing-dom/url-shortener-go/internal/handler"
 )
 
-func home(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "at root!")
-	fmt.Println("back home!")
-}
-
-func ping(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "pong!")
-	fmt.Println("received a ping request!")
-}
-
 func main() {
-	http.HandleFunc("/home", home)
-	http.HandleFunc("/ping", ping)
+	fmt.Println("starting server...")
+
+	ph := &handler.PingHandler{
+		AppName: "Go-URL-Shortener-V1",
+	}
+
+	http.Handle("/ping", ph)
 
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {

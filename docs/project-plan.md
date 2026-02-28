@@ -66,3 +66,21 @@ create:
 - non-root user if possible
 
 note: if it runs locally within docker, kubernetes becomes easier
+
+## kubernetes mental model
+kubernetes manages:
+- desired state
+- replica countt
+- networking
+- health
+- scaling
+
+we're mapping the container into:
+- deployment
+- servvice
+- ingress
+- configmap
+- secret
+- hpa
+
+**not** "writing yaml", we are writing the desired state of the system

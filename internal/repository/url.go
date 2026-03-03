@@ -6,3 +6,7 @@ type URLRepository interface {
 	FindByCode(code string) (string, error)
 	IncrementClicks(code string) error
 }
+
+type InMemoryURLRepository struct {
+	data map[string]string // map[code]url
+}

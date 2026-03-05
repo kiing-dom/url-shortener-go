@@ -9,12 +9,12 @@ import (
 )
 
 type URLService struct {
-	repo *repository.URLRepository
+	repo repository.URLRepository
 }
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-func NewURLService(r *repository.URLRepository) *URLService {
+func NewURLService(r repository.URLRepository) *URLService {
 	return &URLService{
 		repo: r,
 	}
@@ -29,13 +29,16 @@ func (s *URLService) Shorten(input string) (string, error) {
 	// generate unique code
 	code := generateCode()
 
-	// TODO: save mapping of code-URL in the DB (repo)
+	// save mapping of code-URL to repo. if it exists already return error
+	if err := s.repo.Save(input, code); err != nil {
+		return "", err
+	}
 
 	return code, nil
 }
 
 func (s *URLService) Resolve(code string) (string, error) {
-	url, err := s.repo.Find(code)
+	url, err := s.repo.FindByCode(code)
 	if err != nil {
 		return "", errors.New("code not found")
 	}

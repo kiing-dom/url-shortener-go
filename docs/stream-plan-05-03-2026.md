@@ -1,0 +1,3 @@
+- actually use the service methods
+- handle the routes (controller)
+- test

@@ -1,6 +1,9 @@
 package repository
 
-import "errors"
+import (
+	"errors"
+	"sync"
+)
 
 type URLRepository interface {
 	Save(url, code string) error
@@ -10,28 +13,42 @@ type URLRepository interface {
 }
 
 type InMemoryURLRepository struct {
-	data map[string]string // map[code]url
+	mu        sync.RWMutex
+	codeToURL map[string]string // map[code]url
+	URLToCode map[string]string // map[url]code
 }
 
 func NewInMemoryURLRepository() *InMemoryURLRepository {
 	return &InMemoryURLRepository{
-		data: make(map[string]string),
+		codeToURL: make(map[string]string),
+		URLToCode: make(map[string]string),
 	}
 }
 
 // Save stores the URL and code in memory
 func (r *InMemoryURLRepository) Save(url, code string) error {
-	if _, exists := r.data[code]; exists {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, exists := r.codeToURL[code]; exists {
 		return errors.New("code already exists")
 	}
 
-	r.data[code] = url
+	if _, exists := r.URLToCode[url]; exists {
+		return errors.New("URL already exists")
+	}
+
+	r.codeToURL[code] = url
+	r.URLToCode[url] = code
 	return nil
 }
 
 // FindByURL retrieves code for a given URL
 func (r *InMemoryURLRepository) FindByURL(url string) (string, error) {
-	for code, storedURL := range r.data {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for code, storedURL := range r.codeToURL {
 		if storedURL == url {
 			return code, nil
 		}
@@ -42,7 +59,10 @@ func (r *InMemoryURLRepository) FindByURL(url string) (string, error) {
 
 // FindByCode retrieves URL for a given code
 func (r *InMemoryURLRepository) FindByCode(code string) (string, error) {
-	url, exists := r.data[code]
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	url, exists := r.codeToURL[code]
 	if !exists {
 		return "", errors.New("code not found")
 	}

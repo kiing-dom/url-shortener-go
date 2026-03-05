@@ -26,6 +26,10 @@ func (s *URLService) Shorten(input string) (string, error) {
 		return "", err
 	}
 
+	if existingCode, err := s.repo.FindByURL(input); err == nil {
+		return existingCode, nil
+	}
+
 	// generate unique code
 	code := generateCode()
 

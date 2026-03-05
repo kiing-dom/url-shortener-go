@@ -5,19 +5,24 @@ import (
 	"net/http"
 
 	"github.com/kiing-dom/url-shortener-go/internal/handler"
+	"github.com/kiing-dom/url-shortener-go/internal/repository"
+	"github.com/kiing-dom/url-shortener-go/internal/service"
 )
 
 func main() {
 	fmt.Println("starting server...")
 
-	ph := &handler.PingHandler{
-		AppName: "Go-URL-Shortener-V1",
-	}
+	repo := repository.NewInMemoryURLRepository()
+	svc := service.NewURLService(repo)
+	handler := handler.NewURLHandler(svc)
 
-	http.Handle("/ping", ph)
+	// wiring handler methods
+	http.HandleFunc("/shorten", handler.HandleShorten)
+	http.HandleFunc("/", handler.HandleRedirect)
 
+	// setting up port to listen and serve
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
-		fmt.Println("Server failed!", err)
+		fmt.Println("Server failed", err)
 	}
 }

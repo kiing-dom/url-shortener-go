@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <input id="url" type="text" placeholder="Enter URL" />
+    <button onclick="shorten()">Shorten</button>
+    <p id="result"></p>
+    
+    <button onclick="getstats()">Get Stats</button>
+    <p id="stats"></p>
+
+    <script>
+        async function shorten() {
+            const url = document.getElementById("url").value
+            const res = await fetch("/shorten", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url })
+            })
+            const data = await res.json()
+            document.getElementById("result").innerText = data.short_url
+        }
+        async function getstats() {
+            const code = document.getElementById("result").innerText.split("/").pop()
+            const res = await fetch(`/stats/${code}`, {
+                method: "GET",
+                headers: { "Content-Type": "application/json"},
+            })
+
+            const data = await res.json()
+            document.getElementById("stats").innerText = data.Clicks
+        }
+        
+    </script>
+</body>
+</html>

@@ -19,6 +19,9 @@ func main() {
 	// wiring handler methods
 	http.HandleFunc("/shorten", handler.HandleShorten)
 	http.HandleFunc("/", handler.HandleRedirect)
+	http.HandleFunc("/stats/", handler.HandleStats)
+
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	// setting up port to listen and serve
 	err := http.ListenAndServe(":8080", nil)

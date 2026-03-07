@@ -12,6 +12,7 @@ type URLRepository interface {
 	Save(url, code string) error
 	FindByURL(url string) (string, error)
 	FindByCode(code string) (string, error)
+	FindEntryByCode(code string) (*model.URLEntry, error)
 	IncrementClicks(code string) error
 }
 
@@ -27,6 +28,8 @@ func NewInMemoryURLRepository() *InMemoryURLRepository {
 		urlToCode:   make(map[string]string),
 	}
 }
+
+const noCode = "code not found"
 
 // Save stores the URL and code in memory
 func (r *InMemoryURLRepository) Save(url, code string) error {
@@ -73,10 +76,22 @@ func (r *InMemoryURLRepository) FindByCode(code string) (string, error) {
 
 	entry, exists := r.codeToEntry[code]
 	if !exists {
-		return "", errors.New("code not found")
+		return "", errors.New(noCode)
 	}
 
 	return entry.OriginalURL, nil
+}
+
+func (r *InMemoryURLRepository) FindEntryByCode(code string) (*model.URLEntry, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	entry, exists := r.codeToEntry[code]
+	if !exists {
+		return nil, errors.New(noCode)
+	}
+
+	return entry, nil
 }
 
 // placeholder for incrementing clicks
@@ -86,7 +101,7 @@ func (r *InMemoryURLRepository) IncrementClicks(code string) error {
 
 	entry, exists := r.codeToEntry[code]
 	if !exists {
-		return errors.New("code not found")
+		return errors.New(noCode)
 	}
 
 	entry.Clicks++

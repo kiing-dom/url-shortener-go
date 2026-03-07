@@ -5,6 +5,7 @@ import (
 	"math/rand/v2"
 	"net/url"
 
+	"github.com/kiing-dom/url-shortener-go/internal/model"
 	"github.com/kiing-dom/url-shortener-go/internal/repository"
 )
 
@@ -50,6 +51,10 @@ func (s *URLService) Resolve(code string) (string, error) {
 	s.repo.IncrementClicks(code)
 
 	return url, nil
+}
+
+func (s *URLService) GetStats(code string) (*model.URLEntry, error) {
+	return s.repo.FindEntryByCode(code)
 }
 
 func generateCode() string {

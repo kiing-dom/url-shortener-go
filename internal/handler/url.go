@@ -61,3 +61,25 @@ func (h *URLHandler) HandleRedirect(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, originalURL, http.StatusMovedPermanently)
 }
+
+func (h *URLHandler) HandleStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	code := strings.TrimPrefix(r.URL.Path, "/stats/")
+	if code == "" {
+		http.Error(w, "Short code required!", http.StatusBadRequest)
+		return
+	}
+
+	stats, err := h.service.GetStats(code)
+	if err != nil {
+		http.Error(w, "Short URL not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(stats)
+}

@@ -3,6 +3,9 @@ package repository
 import (
 	"errors"
 	"sync"
+	"time"
+
+	"github.com/kiing-dom/url-shortener-go/internal/model"
 )
 
 type URLRepository interface {
@@ -13,15 +16,15 @@ type URLRepository interface {
 }
 
 type InMemoryURLRepository struct {
-	mu        sync.RWMutex
-	codeToURL map[string]string // map[code]url
-	URLToCode map[string]string // map[url]code
+	mu          sync.RWMutex
+	codeToEntry map[string]*model.URLEntry // map[code]URLEntry
+	urlToCode   map[string]string          // map[url]code
 }
 
 func NewInMemoryURLRepository() *InMemoryURLRepository {
 	return &InMemoryURLRepository{
-		codeToURL: make(map[string]string),
-		URLToCode: make(map[string]string),
+		codeToEntry: make(map[string]*model.URLEntry),
+		urlToCode:   make(map[string]string),
 	}
 }
 
@@ -30,16 +33,23 @@ func (r *InMemoryURLRepository) Save(url, code string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if _, exists := r.codeToURL[code]; exists {
+	if _, exists := r.codeToEntry[code]; exists {
 		return errors.New("code already exists")
 	}
 
-	if _, exists := r.URLToCode[url]; exists {
+	if _, exists := r.urlToCode[url]; exists {
 		return errors.New("URL already exists")
 	}
 
-	r.codeToURL[code] = url
-	r.URLToCode[url] = code
+	entry := &model.URLEntry{
+		Code:        code,
+		OriginalURL: url,
+		CreatedAt:   time.Now(),
+		Clicks:      0,
+	}
+
+	r.codeToEntry[code] = entry
+	r.urlToCode[url] = code
 	return nil
 }
 
@@ -48,13 +58,12 @@ func (r *InMemoryURLRepository) FindByURL(url string) (string, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	for code, storedURL := range r.codeToURL {
-		if storedURL == url {
-			return code, nil
-		}
+	code, exists := r.urlToCode[url]
+	if !exists {
+		return "", errors.New("URL not found")
 	}
 
-	return "", errors.New("URL not found")
+	return code, nil
 }
 
 // FindByCode retrieves URL for a given code
@@ -62,16 +71,24 @@ func (r *InMemoryURLRepository) FindByCode(code string) (string, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	url, exists := r.codeToURL[code]
+	entry, exists := r.codeToEntry[code]
 	if !exists {
 		return "", errors.New("code not found")
 	}
 
-	return url, nil
+	return entry.OriginalURL, nil
 }
 
 // placeholder for incrementing clicks
 func (r *InMemoryURLRepository) IncrementClicks(code string) error {
-	// TODO: finish impl
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	entry, exists := r.codeToEntry[code]
+	if !exists {
+		return errors.New("code not found")
+	}
+
+	entry.Clicks++
 	return nil
 }

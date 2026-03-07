@@ -47,6 +47,8 @@ func (s *URLService) Resolve(code string) (string, error) {
 		return "", errors.New("code not found")
 	}
 
+	s.repo.IncrementClicks(code)
+
 	return url, nil
 }
 

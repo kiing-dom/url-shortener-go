@@ -12,7 +12,7 @@ import (
 func main() {
 	fmt.Println("starting server...")
 
-	repo := repository.NewInMemoryURLRepository()
+	repo := repository.NewRedisURLRepository("localhost:6379")
 	svc := service.NewURLService(repo)
 	handler := handler.NewURLHandler(svc)
 
